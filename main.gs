@@ -1,8 +1,8 @@
-// Función que sirve la página web HTML
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index');
 }
-function getDepartamentosYEquipos(){
+
+function getDepartamentosYEquipos() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calendario MP');
   const values = sheet.getDataRange().getValues();
 
@@ -12,12 +12,14 @@ function getDepartamentosYEquipos(){
   const equipoIndex = headers.indexOf("EQUIPO");
   const marcaIndex = headers.indexOf("MARCA");
 
-  const departamentos = [...new Set(values.slice(1).map(row => row[departamentoIndex]))].filter(departamento => departamento !== "");
-  //const departamentos = [...new Set(values.map(row => row[departamentoIndex]))].filter(d => d !== "");
+  const departamentos = [...new Set(values.slice(1).map(row => row[departamentoIndex]))]
+    .filter(d => d)
+    .sort(); // Ordenar alfabéticamente
+
   const departamentoToEquipos = {};
   const equipoToMarcas = {};
   const equipoToID = {};
-  const equipoData = {}; // Guardará datos completos para cada equipo e ID
+  const equipoData = {}; // Para almacenar la información completa de los equipos
 
   values.slice(1).forEach(row => {
     const departamento = row[departamentoIndex];
@@ -39,26 +41,28 @@ function getDepartamentosYEquipos(){
       }
     }
 
-    if (equipo) {
+    if (equipo && idEquipo) {
       if (!equipoToID[equipo]) equipoToID[equipo] = [];
-      if (idEquipo && !equipoToID[equipo].includes(idEquipo)) {
+      if (!equipoToID[equipo].includes(idEquipo)) {
         equipoToID[equipo].push(idEquipo);
       }
-
-      // Guardar información completa del equipo
       equipoData[idEquipo] = { departamento, equipo, marca };
     }
   });
 
-  return { 
-    departamentos, 
-    departamentoToEquipos, 
-    equipoToMarcas, 
+  // Ordenar las listas alfabéticamente
+  Object.keys(departamentoToEquipos).forEach(dep => departamentoToEquipos[dep].sort());
+  Object.keys(equipoToMarcas).forEach(eq => equipoToMarcas[eq].sort());
+  Object.keys(equipoToID).forEach(eq => equipoToID[eq].sort());
+
+  return {
+    departamentos,
+    departamentoToEquipos,
+    equipoToMarcas,
     equipoToID,
-    equipoData // Enviamos la información completa
+    equipoData
   };
 }
-
 // Función para insertar los datos en la hoja de cálculo
 function saveData(idEquipo, equipo, marca, departamento, reporte) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Reportes_de_servicio');
