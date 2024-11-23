@@ -245,6 +245,9 @@
             }
         }
 
+
+
+
         function guardarDatos() {
             const departamentoSelect = document.getElementById("departamento");
             const equipoSelect = document.getElementById("equipo");
@@ -263,11 +266,24 @@
                 // Llamar a la función de Apps Script para guardar los datos
                 google.script.run.saveData(selectedID, selectedEquipo, selectedMarca, selectedDepartamento, reporte);
                 showAlert("Datos guardados correctamente.", "success");
+                        
+                // Limpiar los campos del formulario
+                resetForm();
             }
             else {
                 showAlert("Por favor, complete todos los campos antes de guardar.", "error");
             }
         }
+        function resetForm() {
+            document.getElementById("departamento").value = "";
+            document.getElementById("equipo").innerHTML = "<option value=''>Seleccionar equipo</option>";
+            document.getElementById("marca").innerHTML = "<option value=''>Seleccionar marca</option>";
+            document.getElementById("id").innerHTML = "<option value=''>Seleccionar ID</option>";
+            document.getElementById("reporte").value = ""; // Limpiar el cuadro de texto
+        }
+
+
+
 
         function showAlert(message, type) {
             const alertBox = document.getElementById("alert");
