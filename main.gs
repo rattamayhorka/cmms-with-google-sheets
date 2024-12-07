@@ -1,70 +1,76 @@
+// Genera la página web
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index');
 }
 
-function getDepartamentosYEquipos() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calendario MP');
-  const values = sheet.getDataRange().getValues();
+function getEquipoInfo() { 
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calendario MP');
+    const values = sheet.getDataRange().getValues();
 
-  const headers = values[0];
-  const idIndex = headers.indexOf("ID");
-  const departamentoIndex = headers.indexOf("DEPARTAMENTO");
-  const equipoIndex = headers.indexOf("EQUIPO");
-  const marcaIndex = headers.indexOf("MARCA");
+    // Obtener índices de las columnas necesarias
+    const headers = values[0];
+    const departamentoIndex = headers.indexOf("DEPARTAMENTO");
+    const equipoIndex = headers.indexOf("EQUIPO");
+    const marcaIndex = headers.indexOf("MARCA");
+    const idIndex = headers.indexOf("ID");
 
-  const departamentos = [...new Set(values.slice(1).map(row => row[departamentoIndex]))]
-    .filter(d => d)
-    .sort(); // Ordenar alfabéticamente
+    // Mapeo final
+    const departamentoToEquipos = {};
 
-  const departamentoToEquipos = {};
-  const equipoToMarcas = {};
-  const equipoToID = {};
-  const equipoData = {}; // Para almacenar la información completa de los equipos
+    values.slice(1).forEach(row => {
+        const departamento = row[departamentoIndex];
+        const equipo = row[equipoIndex];
+        const marca = row[marcaIndex];
+        const id = row[idIndex];
 
-  values.slice(1).forEach(row => {
-    const departamento = row[departamentoIndex];
-    const equipo = row[equipoIndex];
-    const marca = row[marcaIndex];
-    const idEquipo = row[idIndex];
+        if (departamento && equipo && marca && id) {
+            if (!departamentoToEquipos[departamento]) {
+                departamentoToEquipos[departamento] = {};
+            }
+            if (!departamentoToEquipos[departamento][equipo]) {
+                departamentoToEquipos[departamento][equipo] = {};
+            }
+            if (!departamentoToEquipos[departamento][equipo][marca]) {
+                departamentoToEquipos[departamento][equipo][marca] = [];
+            }
+            if (!departamentoToEquipos[departamento][equipo][marca].includes(id)) {
+                departamentoToEquipos[departamento][equipo][marca].push(id);
+            }
+        }
+    });
 
-    if (departamento) {
-      if (!departamentoToEquipos[departamento]) departamentoToEquipos[departamento] = [];
-      if (equipo && !departamentoToEquipos[departamento].includes(equipo)) {
-        departamentoToEquipos[departamento].push(equipo);
-      }
-    }
-
-    if (equipo) {
-      if (!equipoToMarcas[equipo]) equipoToMarcas[equipo] = [];
-      if (marca && !equipoToMarcas[equipo].includes(marca)) {
-        equipoToMarcas[equipo].push(marca);
-      }
-    }
-
-    if (equipo && idEquipo) {
-      if (!equipoToID[equipo]) equipoToID[equipo] = [];
-      if (!equipoToID[equipo].includes(idEquipo)) {
-        equipoToID[equipo].push(idEquipo);
-      }
-      equipoData[idEquipo] = { departamento, equipo, marca };
-    }
-  });
-
-  // Ordenar las listas alfabéticamente
-  Object.keys(departamentoToEquipos).forEach(dep => departamentoToEquipos[dep].sort());
-  Object.keys(equipoToMarcas).forEach(eq => equipoToMarcas[eq].sort());
-  Object.keys(equipoToID).forEach(eq => equipoToID[eq].sort());
-
-  return {
-    departamentos,
-    departamentoToEquipos,
-    equipoToMarcas,
-    equipoToID,
-    equipoData
-  };
+    return {
+        departamentos: Object.keys(departamentoToEquipos).sort(),
+        departamentoToEquipos
+    };
 }
-// Función para insertar los datos en la hoja de cálculo
-function saveData(idEquipo, equipo, marca, departamento, reporte) {
+
+function getDetailsById(id) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calendario MP');
+    const values = sheet.getDataRange().getValues();
+
+    // Obtener índices de las columnas necesarias
+    const headers = values[0];
+    const idIndex = headers.indexOf("ID");
+    const areaIndex = headers.indexOf("ÁREA");
+    const modeloIndex = headers.indexOf("MODELO");
+    const serieIndex = headers.indexOf("N. SERIE");
+
+    // Buscar la fila que contiene el ID
+    for (let i = 1; i < values.length; i++) {
+        if (values[i][idIndex] === id) {
+            return {
+                area: values[i][areaIndex],
+                modelo: values[i][modeloIndex],
+                serie: values[i][serieIndex]
+            };
+        }
+    }
+    return { area: "", modelo: "", serie: "" };
+}
+
+
+function saveData(equipo, departamento, marca, id, reporte, area, modelo, serie) { 
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Reportes_de_servicio');
-    sheet.appendRow(["", idEquipo, departamento, "", equipo, marca, "", "", "", "", reporte, new Date()]);
+    sheet.appendRow(["", id, departamento, area, equipo, marca, modelo, serie, "", "", reporte, new Date()]); 
 }
