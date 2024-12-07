@@ -3,182 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Departamentos, Equipos, Marcas e IDs</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-        }
-        
-        h1 {
-            text-align: center;
-            color: #4CAF50;
-            margin-top: 30px;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-
-        label {
-            font-size: 16px;
-            color: #333;
-        }
-
-        select {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            background-color: #f9f9f9;
-            color: #555;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .alert {
-            display: none;
-            padding: 15px;
-            margin-top: 20px;
-            color: white;
-            background-color: #f44336;
-            border-radius: 5px;
-        }
-
-        .alert.success {
-            background-color: #4CAF50;
-        }
-
-        .alert.error {
-            background-color: #f44336;
-        }
-    </style>
+    <title>Formulario de Departamentos, Equipos, Marcas, ID</title>
 </head>
 <body>
 
-    <h1>Selecciona el equipo asociado al Reporte</h1>
+    <h1>Selecciona los detalles del equipo asociado al Reporte</h1>
 
-    <div class="container">
-        <div class="form-group">
-            <label for="departamento">Departamento:</label>
-            <select id="departamento" onchange="updateEquipos()">
-                <option value="">Seleccionar departamento</option>
-            </select>
-        </div>
+    <div>
+        <label for="departamento">Departamento:</label>
+        <select id="departamento" onchange="updateEquipos()">
+            <option value="">Seleccionar departamento</option>
+        </select>
 
-        <div class="form-group">
-            <label for="equipo">Equipo:</label>
-            <select id="equipo" onchange="updateMarcas()">
-                <option value="">Seleccionar equipo</option>
-            </select>
-        </div>
+        <label for="equipo">Equipo:</label>
+        <select id="equipo" onchange="updateMarcas()">
+            <option value="">Seleccionar equipo</option>
+        </select>
 
-        <div class="form-group">
-            <label for="marca">Marca:</label>
-            <select id="marca" onchange="updateIDs()">
-                <option value="">Seleccionar marca</option>
-            </select>
-        </div>
+        <label for="marca">Marca:</label>
+        <select id="marca" onchange="updateIds()">
+            <option value="">Seleccionar marca</option>
+        </select>
 
-        <div class="form-group">
-            <label for="id">ID:</label>
-            <select id="id">
-                <option value="">Seleccionar ID</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="reporte">Describa la falla :</label>
-            <input type="text" id="reporte" placeholder="" />
-        </div>
-        <style>
-            #reporte {
-                width: 96%; /* Ocupa el 100% del contenedor */
-                height: 50px; /* Define la altura deseada */
-                padding: 10px; /* Espaciado interno */
-                font-size: 16px; /* Tamaño del texto */
-                border: 1px solid #9B9B9B; /* Borde */
-                border-radius: 5px; /* Bordes redondeados */
-                background-color: #f9f9f9; /* Color de fondo */
-                text-align: left; /* Alinea el texto a la izquierda */
-                vertical-align: top; /* Asegura que el cursor esté al inicio */
-                line-height: 1.5; /* Ajusta el espacio entre líneas */
-            }
-        </style>
-
-
-        <button onclick="guardarDatos()">Guardar Información</button>
-
-        <div id="alert" class="alert"></div>
+        <label for="id">ID:</label>
+        <select id="id" onchange="getDetailsById()">
+            <option value="">Seleccionar ID</option>
+        </select>
     </div>
 
+    <div>
+        <label for="reporte">Reporte:</label>
+        <textarea id="reporte" rows="4" cols="50" placeholder="Escribe tu reporte aquí..."></textarea>
+    </div>
+
+    <button onclick="guardarDatos()">Guardar Información</button>
+
+    <div id="alert"></div>
+
     <script>
-        // Llamar a la función de Apps Script para obtener los datos iniciales
-        google.script.run.withSuccessHandler(initializeDropdowns).getDepartamentosYEquipos();
+        function fetchEquipoInfo() {
+            google.script.run
+                .withSuccessHandler(initializeDropdowns)
+                .getEquipoInfo();
+        }
 
-        let data; // Variable global para almacenar los datos obtenidos
-
-        // Inicializar los dropdowns con los datos
         function initializeDropdowns(response) {
-            data = response;
             const departamentoSelect = document.getElementById("departamento");
 
-            // Poblar el dropdown de departamentos
-            data.departamentos.forEach(departamento => {
+            response.departamentos.forEach(departamento => {
                 const option = document.createElement("option");
                 option.value = departamento;
                 option.textContent = departamento;
                 departamentoSelect.appendChild(option);
             });
+
+            window.data = response;
         }
 
-        // Actualizar el dropdown de equipos según el departamento seleccionado
         function updateEquipos() {
             const departamentoSelect = document.getElementById("departamento");
             const equipoSelect = document.getElementById("equipo");
-            const marcaSelect = document.getElementById("marca");
-            const idSelect = document.getElementById("id");
 
             const selectedDepartamento = departamentoSelect.value;
-
-            // Limpia los dropdowns dependientes
             equipoSelect.innerHTML = "<option value=''>Seleccionar equipo</option>";
-            marcaSelect.innerHTML = "<option value=''>Seleccionar marca</option>";
-            idSelect.innerHTML = "<option value=''>Seleccionar ID</option>";
+            resetDropdown("marca");
+            resetDropdown("id");
 
-            // Poblar el dropdown de equipos según el departamento
-            if (data.departamentoToEquipos[selectedDepartamento]) {
-                data.departamentoToEquipos[selectedDepartamento].forEach(equipo => {
+            if (window.data.departamentoToEquipos[selectedDepartamento]) {
+                Object.keys(window.data.departamentoToEquipos[selectedDepartamento]).forEach(equipo => {
                     const option = document.createElement("option");
                     option.value = equipo;
                     option.textContent = equipo;
@@ -187,21 +79,18 @@
             }
         }
 
-        // Actualizar el dropdown de marcas según el equipo seleccionado
         function updateMarcas() {
+            const departamentoSelect = document.getElementById("departamento");
             const equipoSelect = document.getElementById("equipo");
             const marcaSelect = document.getElementById("marca");
-            const idSelect = document.getElementById("id");
 
+            const selectedDepartamento = departamentoSelect.value;
             const selectedEquipo = equipoSelect.value;
-
-            // Limpia los dropdowns dependientes
             marcaSelect.innerHTML = "<option value=''>Seleccionar marca</option>";
-            idSelect.innerHTML = "<option value=''>Seleccionar ID</option>";
+            resetDropdown("id");
 
-            // Poblar el dropdown de marcas según el equipo
-            if (data.equipoToMarcas[selectedEquipo]) {
-                data.equipoToMarcas[selectedEquipo].forEach(marca => {
+            if (window.data.departamentoToEquipos[selectedDepartamento]?.[selectedEquipo]) {
+                Object.keys(window.data.departamentoToEquipos[selectedDepartamento][selectedEquipo]).forEach(marca => {
                     const option = document.createElement("option");
                     option.value = marca;
                     option.textContent = marca;
@@ -210,8 +99,7 @@
             }
         }
 
-        // Actualizar el dropdown de IDs según el departamento, equipo y marca seleccionados
-        function updateIDs() {
+        function updateIds() {
             const departamentoSelect = document.getElementById("departamento");
             const equipoSelect = document.getElementById("equipo");
             const marcaSelect = document.getElementById("marca");
@@ -220,78 +108,68 @@
             const selectedDepartamento = departamentoSelect.value;
             const selectedEquipo = equipoSelect.value;
             const selectedMarca = marcaSelect.value;
-
-            // Limpia el dropdown de IDs
             idSelect.innerHTML = "<option value=''>Seleccionar ID</option>";
 
-            // Filtrar y poblar los IDs según las tres selecciones
-            if (selectedDepartamento && selectedEquipo && selectedMarca) {
-                const ids = data.equipoToID[selectedEquipo]?.filter(id => {
-                    const equipoData = data.equipoData[id]; // Buscar información completa del equipo
-                    return (
-                        equipoData.departamento === selectedDepartamento &&
-                        equipoData.marca === selectedMarca
-                    );
+            if (window.data.departamentoToEquipos[selectedDepartamento]?.[selectedEquipo]?.[selectedMarca]) {
+                window.data.departamentoToEquipos[selectedDepartamento][selectedEquipo][selectedMarca].forEach(id => {
+                    const option = document.createElement("option");
+                    option.value = id;
+                    option.textContent = id;
+                    idSelect.appendChild(option);
                 });
-
-                if (ids) {
-                    ids.forEach(id => {
-                        const option = document.createElement("option");
-                        option.value = id;
-                        option.textContent = id;
-                        idSelect.appendChild(option);
-                    });
-                }
             }
         }
 
+        function getDetailsById() {
+        const idSelect = document.getElementById("id");
+        const selectedId = idSelect.value;
 
-
-
-        function guardarDatos() {
-            const departamentoSelect = document.getElementById("departamento");
-            const equipoSelect = document.getElementById("equipo");
-            const marcaSelect = document.getElementById("marca");
-            const idSelect = document.getElementById("id");
-            const reporteInput = document.getElementById("reporte"); // Capturamos el cuadro de texto
-
-            const selectedDepartamento = departamentoSelect.value;
-            const selectedEquipo = equipoSelect.value;
-            const selectedMarca = marcaSelect.value;
-            const selectedID = idSelect.value;
-            const reporte = reporteInput.value; // Capturamos el valor del texto ingresado
-
-            // Validar que se haya seleccionado todos los campos y que el reporte no esté vacía
-            if (selectedDepartamento && selectedEquipo && selectedMarca && selectedID && reporte) {
-                // Llamar a la función de Apps Script para guardar los datos
-                google.script.run.saveData(selectedID, selectedEquipo, selectedMarca, selectedDepartamento, reporte);
-                showAlert("Datos guardados correctamente.", "success");
-                        
-                // Limpiar los campos del formulario
-                resetForm();
-            }
-            else {
-                showAlert("Por favor, complete todos los campos antes de guardar.", "error");
-            }
+        if (selectedId) {
+            google.script.run
+                .withSuccessHandler(function(details) {
+                    // Guardamos los valores devueltos desde el servidor
+                    window.selectedArea = details.area;
+                    window.selectedModelo = details.modelo;
+                    window.selectedNserie = details.serie;  // Corregido 'nserie' a 'serie'
+                })
+                .getDetailsById(selectedId);
         }
-        function resetForm() {
-            document.getElementById("departamento").value = "";
-            document.getElementById("equipo").innerHTML = "<option value=''>Seleccionar equipo</option>";
-            document.getElementById("marca").innerHTML = "<option value=''>Seleccionar marca</option>";
-            document.getElementById("id").innerHTML = "<option value=''>Seleccionar ID</option>";
-            document.getElementById("reporte").value = ""; // Limpiar el cuadro de texto
+    }
+    function guardarDatos() {
+        const departamentoSelect = document.getElementById("departamento");
+        const equipoSelect = document.getElementById("equipo");
+        const marcaSelect = document.getElementById("marca");
+        const idSelect = document.getElementById("id");
+        const reporteText = document.getElementById("reporte").value;
+
+        const selectedDepartamento = departamentoSelect.value;
+        const selectedEquipo = equipoSelect.value;
+        const selectedMarca = marcaSelect.value;
+        const selectedId = idSelect.value;
+
+        if (selectedDepartamento && selectedEquipo && selectedMarca && selectedId && reporteText.trim() !== "" && window.selectedArea && window.selectedModelo && window.selectedNserie) {
+            // Llamamos a la función de guardar en el backend con el área, modelo y serie
+            google.script.run.saveData(
+                selectedEquipo, 
+                selectedDepartamento, 
+                selectedMarca, 
+                selectedId, 
+                reporteText, 
+                window.selectedArea, 
+                window.selectedModelo, 
+                window.selectedNserie
+            );
+            alert("Datos guardados correctamente.");
+        } else {
+            alert("Por favor, completa todos los campos.");
+        }
+    }
+        function resetDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.innerHTML = `<option value=''>Seleccionar ${dropdownId}</option>`;
         }
 
-
-
-
-        function showAlert(message, type) {
-            const alertBox = document.getElementById("alert");
-            alertBox.className = "alert " + type;
-            alertBox.textContent = message;
-            alertBox.style.display = "block";
-        }
-
+        window.onload = fetchEquipoInfo;
     </script>
 
 </body>
